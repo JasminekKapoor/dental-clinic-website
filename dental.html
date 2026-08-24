@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aura Dental Clinic & Orthodontics</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React & ReactDOM CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- Babel for in-browser JSX parsing -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .animate-fadeIn { animation: fadeIn 0.25s ease-out forwards; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-white text-slate-800 antialiased selection:bg-teal-500 selection:text-white">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // --- DATA STORE ---
+    const TREATMENTS = {
+      'braces': {
+        name: 'Braces & Orthodontics',
+        category: 'Orthodontics',
+        tagline: 'Comprehensive orthodontic correction for children, teens, and adults.',
+        duration: '12 – 24 Months',
+        visits: 'Every 4 to 8 weeks',
+        what: 'Orthodontic braces are dental appliances designed to gently guide misaligned teeth into their ideal positions over time using continuous, calibrated pressure.',
+        symptoms: ['Difficulty chewing evenly', 'Crowded or overlapping teeth', 'Gaps and spacing', 'Jaw clicking or fatigue'],
+        timeline: [
+          { step: 1, title: 'Consultation & 3D Imaging', desc: 'Complete intraoral scan and digital X-rays.' },
+          { step: 2, title: 'Brackets Bonding', desc: 'Precision placement of ceramic or metal brackets.' },
+          { step: 3, title: 'Periodic Adjustments', desc: 'Progress checkups and wire upgrades every 4-8 weeks.' },
+          { step: 4, title: 'Debonding & Custom Retainer', desc: 'Enamel polishing and delivery of retention trays.' }
+        ]
+      },
+      'retainers': {
+        name: 'Retainers & Retention Plans',
+        category: 'Orthodontics',
+        tagline: 'Preserve your smile alignment for life with custom Essix or bonded retainers.',
+        duration: 'Lifelong Nightly Wear',
+        visits: '1 Fitting + 6-month checks',
+        what: 'Retainers hold teeth securely in place after orthodontic movement while bone consolidates around the corrected positions.',
+        symptoms: ['Teeth shifting after braces', 'Lost or broken previous retainer', 'Nighttime clenching habits'],
+        timeline: [
+          { step: 1, title: '3D Optical Arch Scan', desc: 'No-gag powder-free optical recording.' },
+          { step: 2, title: 'Precision Fabrication', desc: 'Custom thermoforming in our dental lab.' },
+          { step: 3, title: 'Try-in & Delivery', desc: 'Checking bite comfort and retention fit.' }
+        ]
+      },
+      'gum-care': {
+        name: 'Gum Care & Periodontal Therapy',
+        category: 'Periodontics',
+        tagline: 'Restore gum tightness, prevent bleeding, and safeguard tooth foundations.',
+        duration: '1 to 3 Sessions',
+        visits: '45 mins per session',
+        what: 'Targeted therapy to remove bacterial biofilm and hardened tartar below the gumline to arrest gingivitis and periodontitis.',
+        symptoms: ['Bleeding when brushing', 'Red puffy tender gums', 'Persistent bad breath', 'Gum recession'],
+        timeline: [
+          { step: 1, title: 'Pocket Depth Charting', desc: 'Measuring gingival sulcus around all teeth.' },
+          { step: 2, title: 'Ultrasonic Debridement', desc: 'Painless acoustic vibration cleaning.' },
+          { step: 3, title: '4-Week Evaluation', desc: 'Measuring tissue tightening and pocket reduction.' }
+        ]
+      },
+      'cavities': {
+        name: 'Tooth Fillings & Cavity Repair',
+        category: 'Restorative',
+        tagline: 'Gentle, tooth-colored composite restorations to stop decay.',
+        duration: '30 to 45 mins',
+        visits: '1 Single appointment',
+        what: 'Composite resin restorations bonded to enamel to restore structural strength, seal out bacteria, and match natural tooth shades.',
+        symptoms: ['Sweet or cold sensitivity', 'Visible dark pit on tooth', 'Food trapping between teeth'],
+        timeline: [
+          { step: 1, title: 'Gentle Numbing', desc: 'Topical comfort gel followed by localized anesthetic.' },
+          { step: 2, title: 'Decay Removal', desc: 'Disinfecting the cavity space cleanly.' },
+          { step: 3, title: 'Layered Resin & Polish', desc: 'Curing under LED light and bite polishing.' }
+        ]
+      },
+      'scaling': {
+        name: 'Scaling & Professional Cleaning',
+        category: 'Preventative',
+        tagline: 'Ultrasonic plaque, calculus, and surface stain removal.',
+        duration: '45 Minutes',
+        visits: 'Every 6 Months',
+        what: 'Professional prophylaxis to clear hardened calculus that standard brushing cannot remove, preventing gum inflammation.',
+        symptoms: ['Hard yellow tartar behind front teeth', 'Stains from coffee or tea', 'Over 6 months since last cleaning'],
+        timeline: [
+          { step: 1, title: 'Ultrasonic Scaling', desc: 'Loosening calculus with cooling water vibrations.' },
+          { step: 2, title: 'Interdental Flossing', desc: 'Clearing contact points between all teeth.' },
+          { step: 3, title: 'Prophy Polish & Fluoride', desc: 'High-gloss polishing and protective enamel seal.' }
+        ]
+      },
+      'teeth-whitening': {
+        name: 'Professional Teeth Whitening',
+        category: 'Cosmetic',
+        tagline: 'Dentist-supervised in-clinic LED or custom take-home whitening.',
+        duration: '60 to 75 Mins',
+        visits: '1 In-Office Visit',
+        what: 'Medical-grade peroxide formulations activated by cool LED light to dissolve internal enamel chromogens safely.',
+        symptoms: ['Yellowing from coffee/tea', 'Dull enamel shade', 'Smile prep before a wedding or interview'],
+        timeline: [
+          { step: 1, title: 'Shade Documentation', desc: 'Recording baseline tooth shade guide.' },
+          { step: 2, title: 'Gum Barrier Protection', desc: 'Isolating soft tissues for comfort.' },
+          { step: 3, title: '3x15 Min Gel Cycles', desc: 'Activating whitening gel with cool spectrum LED.' }
+        ]
+      },
+      'tooth-pain': {
+        name: 'Tooth Pain & Urgent Evaluation',
+        category: 'Diagnostic',
+        tagline: 'Rapid diagnosis and emergency comfort relief for acute toothache.',
+        duration: 'Same-Day Assessment',
+        visits: 'Immediate relief visit',
+        what: 'Targeted diagnostic testing and immediate palliative treatment for pulpitis, cracked teeth, or dental infections.',
+        symptoms: ['Throbbing lingering pain', 'Sharp pain on biting', 'Hot/cold sensitivity lasting minutes'],
+        timeline: [
+          { step: 1, title: 'Digital X-Ray & Testing', desc: 'Thermal vitality and percussion assessment.' },
+          { step: 2, title: 'Fast Pain Alleviation', desc: 'Gentle anesthesia and soothing dressing.' },
+          { step: 3, title: 'Definitive Care Plan', desc: 'Explaining next steps clearly without pressure.' }
+        ]
+      },
+      'general-checkup': {
+        name: 'Comprehensive Dental Exam',
+        category: 'Diagnostic',
+        tagline: '8-Point oral health wellness review, low-dose digital radiographs, and custom roadmap.',
+        duration: '40 to 50 Mins',
+        visits: 'Recommended every 6 months',
+        what: 'Thorough inspection of teeth, gums, restorations, bite alignment, and oral cancer screening.',
+        symptoms: ['New patient establishment', 'Over 1 year since last checkup', 'Second opinion consultation'],
+        timeline: [
+          { step: 1, title: 'Digital Bitewing X-Rays', desc: 'Checking hidden areas between teeth.' },
+          { step: 2, title: '8-Point Clinical Exam', desc: 'Examining teeth, gums, TMJ, and soft tissues.' },
+          { step: 3, title: 'Chairside Consultation', desc: 'Reviewing photos on screen and personalized plan.' }
+        ]
+      }
+    };
+
+    // --- MAIN APP COMPONENT ---
+    function App() {
+      const [route, setRoute] = useState(window.location.hash.replace('#', '') || '/');
+      const [storedRequests, setStoredRequests] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('aura_requests') || '[]'); } catch { return []; }
+      });
+      const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+      const [selectedConcernPrefill, setSelectedConcernPrefill] = useState('');
+
+      useEffect(() => {
+        const handleHash = () => {
+          setRoute(window.location.hash.replace('#', '') || '/');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+        window.addEventListener('hashchange', handleHash);
+        return () => window.removeEventListener('hashchange', handleHash);
+      }, []);
+
+      const navigate = (path) => {
+        window.location.hash = path;
+        setRoute(path);
+        setMobileMenuOpen(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
+      // --- BOOKING FORM SUBMIT HANDLER ---
+      const handleBookingSubmit = (formData) => {
+        const newReq = {
+          id: 'REQ-' + new Date().getFullYear() + '-' + Math.floor(10000 + Math.random() * 90000),
+          ...formData,
+          createdAt: new Date().toISOString(),
+          status: 'Pending Clinic Confirmation'
+        };
+        const updated = [newReq, ...storedRequests];
+        setStoredRequests(updated);
+        localStorage.setItem('aura_requests', JSON.stringify(updated));
+        return newReq;
+      };
+
+      const handleDeleteRequest = (id) => {
+        const updated = storedRequests.filter(r => r.id !== id);
+        setStoredRequests(updated);
+        localStorage.setItem('aura_requests', JSON.stringify(updated));
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col justify-between">
+          {/* Top Bar */}
+          <div className="bg-slate-900 text-slate-200 text-xs py-2 px-4 border-b border-slate-800">
+            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="bg-teal-500/20 text-teal-300 font-semibold px-2 py-0.5 rounded-full text-[11px]">
+                  ● Open Today • 8:30 AM – 7:30 PM
+                </span>
+                <span className="hidden md:inline text-slate-400">| 452 Wellness Blvd, Suite 300</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <a href="tel:+18005553368" className="text-slate-200 hover:text-teal-300 font-semibold">+1 (800) 555-DENT</a>
+                <button onClick={() => navigate('/dental-problems/tooth-pain')} className="text-rose-300 hover:text-rose-200 font-medium text-[11px] bg-rose-500/10 px-2 py-0.5 rounded-full">
+                  Urgent Tooth Pain?
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Navigation */}
+          <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-xs">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+              <div onClick={() => navigate('/')} className="flex items-center gap-3 cursor-pointer">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-teal-600 to-sky-400 flex items-center justify-center text-white font-black text-xl shadow-md">
+                  A
+                </div>
+                <div>
+                  <span className="text-xl font-black tracking-tight text-slate-900 block leading-tight">
+                    AURA<span className="text-teal-600">DENTAL</span>
+                  </span>
+                  <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">Modern Care & Orthodontics</span>
+                </div>
+              </div>
+
+              <nav className="hidden lg:flex items-center gap-2 text-sm font-semibold">
+                <button onClick={() => navigate('/')} className={`px-3 py-2 rounded-xl transition ${route === '/' ? 'text-teal-700 bg-teal-50' : 'text-slate-600 hover:text-teal-700'}`}>Home</button>
+                <button onClick={() => navigate('/treatments/braces')} className={`px-3 py-2 rounded-xl transition ${route.includes('braces') ? 'text-teal-700 bg-teal-50' : 'text-slate-600 hover:text-teal-700'}`}>Braces</button>
+                <button onClick={() => navigate('/treatments/retainers')} className={`px-3 py-2 rounded-xl transition ${route.includes('retainers') ? 'text-teal-700 bg-teal-50' : 'text-slate-600 hover:text-teal-700'}`}>Retainers</button>
+                <button onClick={() => navigate('/dental-problems/gum-care')} className={`px-3 py-2 rounded-xl transition ${route.includes('gum-care') ? 'text-teal-700 bg-teal-50' : 'text-slate-600 hover:text-teal-700'}`}>Gum Care</button>
+                <button onClick={() => navigate('/dental-problems/cavities')} className={`px-3 py-2 rounded-xl transition ${route.includes('cavities') ? 'text-teal-700 bg-teal-50' : 'text-slate-600 hover:text-teal-700'}`}>Cavities</button>
+                <button onClick={() => navigate('/treatments/scaling')} className={`px-3 py-2 rounded-xl transition ${route.includes('scaling') ? 'text-teal-700 bg-teal-50' : 'text-slate-600 hover:text-teal-700'}`}>Scaling</button>
+                <button onClick={() => navigate('/treatments/teeth-whitening')} className={`px-3 py-2 rounded-xl transition ${route.includes('teeth-whitening') ? 'text-teal-700 bg-teal-50' : 'text-slate-600 hover:text-teal-700'}`}>Whitening</button>
+                <button onClick={() => navigate('/dental-problems/tooth-pain')} className={`px-3 py-2 rounded-xl transition ${route.includes('tooth-pain') ? 'text-rose-700 bg-rose-50' : 'text-slate-600 hover:text-rose-600'}`}>Tooth Pain</button>
+                <button onClick={() => navigate('/my-appointments')} className="px-3 py-2 text-xs text-slate-500 hover:text-teal-700">My Requests ({storedRequests.length})</button>
+              </nav>
+
+              <div className="hidden sm:flex items-center gap-3">
+                <button onClick={() => navigate('/book')} className="bg-gradient-to-r from-teal-600 to-sky-700 hover:from-teal-700 hover:to-sky-800 text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow-md transition transform hover:scale-105 active:scale-95">
+                  Book Appointment
+                </button>
+              </div>
+
+              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden p-2 text-slate-700">
+                ☰
+              </button>
+            </div>
+
+            {mobileMenuOpen && (
+              <div className="lg:hidden bg-white border-t border-slate-100 p-4 space-y-2 text-sm font-semibold shadow-xl">
+                <button onClick={() => navigate('/')} className="block w-full text-left py-2 px-3 hover:bg-teal-50 rounded-lg">Home</button>
+                <button onClick={() => navigate('/treatments/braces')} className="block w-full text-left py-2 px-3 hover:bg-teal-50 rounded-lg">Braces & Orthodontics</button>
+                <button onClick={() => navigate('/treatments/retainers')} className="block w-full text-left py-2 px-3 hover:bg-teal-50 rounded-lg">Retainers</button>
+                <button onClick={() => navigate('/dental-problems/gum-care')} className="block w-full text-left py-2 px-3 hover:bg-teal-50 rounded-lg">Gum Care</button>
+                <button onClick={() => navigate('/dental-problems/cavities')} className="block w-full text-left py-2 px-3 hover:bg-teal-50 rounded-lg">Cavities</button>
+                <button onClick={() => navigate('/treatments/scaling')} className="block w-full text-left py-2 px-3 hover:bg-teal-50 rounded-lg">Scaling & Cleaning</button>
+                <button onClick={() => navigate('/treatments/teeth-whitening')} className="block w-full text-left py-2 px-3 hover:bg-teal-50 rounded-lg">Teeth Whitening</button>
+                <button onClick={() => navigate('/dental-problems/tooth-pain')} className="block w-full text-left py-2 px-3 text-rose-600 hover:bg-rose-50 rounded-lg">Tooth Pain Relief</button>
+                <button onClick={() => navigate('/book')} className="block w-full text-center py-3 bg-teal-600 text-white rounded-xl font-bold mt-2">Book Appointment</button>
+              </div>
+            )}
+          </header>
+
+          {/* PAGE CONTENT ROUTER */}
+          <main className="flex-1">
+            {route === '/' && <HomePageView navigate={navigate} setPrefill={setSelectedConcernPrefill} />}
+            {route === '/book' && <BookPageView onSubmit={handleBookingSubmit} prefill={selectedConcernPrefill} navigate={navigate} />}
+            {route === '/my-appointments' && <MyAppointmentsView requests={storedRequests} onDelete={handleDeleteRequest} navigate={navigate} />}
+            {route.startsWith('/treatments/') && <TreatmentDetailView slug={route.replace('/treatments/', '')} navigate={navigate} setPrefill={setSelectedConcernPrefill} />}
+            {route.startsWith('/dental-problems/') && <TreatmentDetailView slug={route.replace('/dental-problems/', '')} navigate={navigate} setPrefill={setSelectedConcernPrefill} />}
+          </main>
+
+          {/* Mobile Bottom Sticky Bar */}
+          {route !== '/book' && (
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 shadow-lg flex gap-2">
+              <a href="tel:+18005553368" className="flex-1 py-2.5 bg-slate-100 text-slate-800 font-bold rounded-xl text-center text-xs">📞 Call Clinic</a>
+              <button onClick={() => navigate('/book')} className="flex-2 py-2.5 bg-teal-600 text-white font-bold rounded-xl text-xs shadow-md">📅 Book Appointment</button>
+            </div>
+          )}
+
+          {/* Footer */}
+          <footer className="bg-slate-950 text-slate-400 py-12 px-4 border-t border-slate-800 text-xs">
+            <div className="max-w-7xl mx-auto space-y-6 text-center sm:text-left">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <span className="text-xl font-black text-white">AURA<span className="text-teal-400">DENTAL</span></span>
+                <p>452 Wellness Blvd, Suite 300 • Phone: +1 (800) 555-DENT • care@auradental.com</p>
+              </div>
+              <p className="p-3 bg-slate-900 rounded-xl text-[11px] leading-relaxed text-slate-500">
+                Educational Disclaimer: The information provided on this website is for educational purposes only and does not replace in-person dental consultation or clinical diagnosis.
+              </p>
+              <div className="flex justify-between items-center text-slate-600 text-[11px] pt-4 border-t border-slate-900">
+                <span>© 2026 Aura Dental Clinic. All rights reserved.</span>
+                <span>ISO-9001 Sterilized Practice</span>
+              </div>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    // --- HOME PAGE VIEW ---
+    function HomePageView({ navigate, setPrefill }) {
+      const cards = [
+        { title: 'Braces', emoji: '🦷', path: '/treatments/braces', desc: 'Alignment & bite correction' },
+        { title: 'Retainers', emoji: '😁', path: '/treatments/retainers', desc: 'Smile retention & aligners' },
+        { title: 'Gum Problems', emoji: '🪥', path: '/dental-problems/gum-care', desc: 'Bleeding, swelling & care' },
+        { title: 'Cavities', emoji: '🦷', path: '/dental-problems/cavities', desc: 'Tooth decay & white fillings' },
+        { title: 'Teeth Whitening', emoji: '✨', path: '/treatments/teeth-whitening', desc: 'Cosmetic shade brightening' },
+        { title: 'Scaling & Cleaning', emoji: '🧼', path: '/treatments/scaling', desc: 'Calculus & stain prophylaxis' },
+        { title: 'Tooth Pain', emoji: '😣', path: '/dental-problems/tooth-pain', desc: 'Sensitivity & urgent relief' },
+        { title: 'General Check-up', emoji: '🩺', path: '/treatments/general-checkup', desc: '8-Point comprehensive exam' }
+      ];
+
+      return (
+        <div className="space-y-16 pb-16">
+          {/* Hero */}
+          <section className="bg-gradient-to-b from-sky-50/70 via-teal-50/30 to-white py-16 px-4 text-center">
+            <div className="max-w-4xl mx-auto space-y-6">
+              <span className="inline-block bg-teal-100 text-teal-800 text-xs font-bold px-3 py-1 rounded-full border border-teal-200">
+                Award-Winning Modern Dental Practice
+              </span>
+              <h1 className="text-4xl sm:text-6xl font-black text-slate-950 tracking-tight leading-tight">
+                Your Smile, Your Health, <br />
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-sky-600">Our Care.</span>
+              </h1>
+              <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto">
+                Personalized dental care for healthier teeth, healthier gums, and a confident smile. Explore transparent treatment guides built around your needs.
+              </p>
+              <div className="flex justify-center gap-4 pt-2">
+                <button onClick={() => navigate('/book')} className="bg-gradient-to-r from-teal-600 to-sky-700 text-white font-bold px-7 py-3.5 rounded-2xl shadow-lg hover:scale-105 transition">
+                  Book an Appointment
+                </button>
+                <button onClick={() => navigate('/treatments/braces')} className="bg-white text-slate-800 font-bold px-6 py-3.5 rounded-2xl border border-slate-200 shadow-xs hover:bg-slate-50 transition">
+                  Explore Treatments →
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {/* What Brings You Here */}
+          <section className="max-w-7xl mx-auto px-4">
+            <div className="text-center mb-10">
+              <span className="text-xs font-bold uppercase tracking-widest text-teal-700">Patient-Centered Navigation</span>
+              <h2 className="text-3xl font-black text-slate-950 mt-1">What Brings You Here Today?</h2>
+              <p className="text-slate-500 text-sm mt-1">Click on your concern to read the dedicated clinical guide.</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {cards.map((c, i) => (
+                <div key={i} onClick={() => navigate(c.path)} className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs hover:shadow-xl hover:border-teal-400 transition cursor-pointer flex flex-col justify-between">
+                  <div>
+                    <span className="text-3xl block mb-2">{c.emoji}</span>
+                    <h3 className="font-bold text-slate-900 text-base">{c.title}</h3>
+                    <p className="text-xs text-slate-500 mt-1">{c.desc}</p>
+                  </div>
+                  <span className="text-xs font-bold text-teal-600 mt-4 block">View Guide →</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      );
+    }
+
+    // --- TREATMENT DETAIL VIEW ---
+    function TreatmentDetailView({ slug, navigate, setPrefill }) {
+      const data = TREATMENTS[slug] || TREATMENTS['general-checkup'];
+
+      const handleBook = () => {
+        setPrefill(data.name.split(' ')[0]);
+        navigate('/book');
+      };
+
+      return (
+        <div className="max-w-5xl mx-auto px-4 py-10 space-y-10">
+          <button onClick={() => navigate('/')} className="text-xs font-bold text-slate-500 hover:text-teal-600">
+            ← Back to All Services
+          </button>
+
+          <div className="bg-gradient-to-br from-slate-900 to-teal-950 text-white p-8 rounded-3xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="space-y-2 max-w-2xl">
+              <span className="bg-teal-500/20 text-teal-300 text-xs font-bold px-3 py-1 rounded-full uppercase border border-teal-400/30">
+                {data.category} Care
+              </span>
+              <h1 className="text-3xl sm:text-4xl font-black">{data.name}</h1>
+              <p className="text-slate-300 text-sm">{data.tagline}</p>
+              <div className="flex gap-4 pt-2 text-xs text-slate-300">
+                <span>⏱ Duration: <strong>{data.duration}</strong></span>
+                <span>📅 Visits: <strong>{data.visits}</strong></span>
+              </div>
+            </div>
+            <button onClick={handleBook} className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-black px-6 py-3.5 rounded-2xl shadow-lg shrink-0 transition">
+              Book for {data.name.split(' ')[0]}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-3">
+              <h3 className="font-bold text-lg text-slate-900">What Is This Treatment?</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">{data.what}</p>
+            </div>
+            <div className="bg-teal-50/50 p-6 rounded-3xl border border-teal-100 space-y-3">
+              <h3 className="font-bold text-lg text-teal-950">Common Signs & Reasons</h3>
+              <ul className="text-sm text-teal-900 space-y-1.5">
+                {data.symptoms.map((s, i) => (
+                  <li key={i}>• {s}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-3xl border border-slate-200/80 space-y-4">
+            <h3 className="font-bold text-lg text-slate-900">Step-by-Step Treatment Journey</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {data.timeline.map((t, i) => (
+                <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <span className="text-xs font-bold text-teal-700">Step {t.step}</span>
+                  <h4 className="font-bold text-slate-900 text-sm mt-0.5">{t.title}</h4>
+                  <p className="text-xs text-slate-500 mt-1">{t.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // --- BOOK APPOINTMENT PAGE VIEW ---
+    function BookPageView({ onSubmit, prefill, navigate }) {
+      const concerns = [
+        'Braces', 'Retainers', 'Gum Problems', 'Cavities',
+        'Scaling & Cleaning', 'Teeth Whitening', 'Tooth Pain',
+        'General Check-up', 'Other'
+      ];
+
+      const [form, setForm] = useState({
+        fullName: '', age: '', phone: '', email: '',
+        preferredDate: '', preferredTime: '10:00 AM',
+        dentalConcern: prefill || 'General Check-up',
+        additionalMessage: ''
+      });
+
+      const [errors, setErrors] = useState({});
+      const [submitted, setSubmitted] = useState(null);
+
+      const validate = () => {
+        const errs = {};
+        if (!form.fullName.trim()) errs.fullName = 'Full Name is required';
+        if (!form.age || form.age < 1 || form.age > 115) errs.age = 'Enter valid age (1-115)';
+        if (!form.phone.trim() || form.phone.length < 8) errs.phone = 'Valid phone number is required';
+        if (!form.email.trim() || !form.email.includes('@')) errs.email = 'Valid email is required';
+        if (!form.preferredDate) errs.preferredDate = 'Select a preferred date';
+        if (!form.dentalConcern) errs.dentalConcern = 'Select a concern';
+        setErrors(errs);
+        return Object.keys(errs).length === 0;
+      };
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!validate()) return;
+        const result = onSubmit(form);
+        setSubmitted(result);
+      };
+
+      if (submitted) {
+        return (
+          <div className="max-w-xl mx-auto my-12 p-8 bg-white rounded-3xl border border-teal-200 shadow-2xl text-center space-y-6">
+            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl font-black">
+              ✓
+            </div>
+            <div className="space-y-1">
+              <span className="text-xs font-bold text-teal-800 bg-teal-50 px-3 py-1 rounded-full uppercase">Appointment Request Received</span>
+              <h2 className="text-2xl font-black text-slate-900 mt-2">Thank you, {submitted.fullName}!</h2>
+              <p className="text-xs text-slate-500">Ref Code: <strong className="text-teal-700 font-mono">{submitted.id}</strong></p>
+            </div>
+            <div className="bg-slate-50 p-4 rounded-2xl text-left text-xs space-y-2 border border-slate-200">
+              <p><strong>Concern:</strong> {submitted.dentalConcern}</p>
+              <p><strong>Date & Time:</strong> {submitted.preferredDate} at {submitted.preferredTime}</p>
+              <p><strong>Contact:</strong> {submitted.phone} ({submitted.email})</p>
+              <p className="text-amber-700 pt-1 border-t border-slate-200"><strong>Status:</strong> Pending Clinic Verification Call</p>
+            </div>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              This request is stored in your browser demo session. Our clinic desk will call you at {submitted.phone} to confirm your appointment.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => navigate('/my-appointments')} className="px-5 py-2.5 bg-teal-600 text-white text-xs font-bold rounded-xl shadow">
+                View in My Requests
+              </button>
+              <button onClick={() => setSubmitted(null)} className="px-5 py-2.5 bg-slate-100 text-slate-800 text-xs font-bold rounded-xl">
+                Submit Another Request
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="max-w-3xl mx-auto my-10 p-6 sm:p-10 bg-white rounded-3xl border border-slate-200 shadow-xl space-y-8">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-teal-700 bg-teal-50 px-3 py-1 rounded-full">Online Request</span>
+            <h1 className="text-3xl font-black text-slate-900 mt-2">Request an Appointment</h1>
+            <p className="text-slate-500 text-xs mt-1">No payment required. We will call you to confirm the exact schedule.</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Full Name *</label>
+                <input type="text" placeholder="e.g. Sarah Jenkins" value={form.fullName} onChange={e => setForm({...form, fullName: e.target.value})} className={`w-full p-3 rounded-xl border ${errors.fullName ? 'border-rose-400 bg-rose-50' : 'border-slate-300'}`} />
+                {errors.fullName && <p className="text-xs text-rose-500 mt-1">{errors.fullName}</p>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Age *</label>
+                <input type="number" placeholder="e.g. 28" min="1" max="115" value={form.age} onChange={e => setForm({...form, age: e.target.value})} className={`w-full p-3 rounded-xl border ${errors.age ? 'border-rose-400 bg-rose-50' : 'border-slate-300'}`} />
+                {errors.age && <p className="text-xs text-rose-500 mt-1">{errors.age}</p>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Phone Number *</label>
+                <input type="tel" placeholder="e.g. (555) 234-5678" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className={`w-full p-3 rounded-xl border ${errors.phone ? 'border-rose-400 bg-rose-50' : 'border-slate-300'}`} />
+                {errors.phone && <p className="text-xs text-rose-500 mt-1">{errors.phone}</p>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Email Address *</label>
+                <input type="email" placeholder="e.g. sarah@example.com" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className={`w-full p-3 rounded-xl border ${errors.email ? 'border-rose-400 bg-rose-50' : 'border-slate-300'}`} />
+                {errors.email && <p className="text-xs text-rose-500 mt-1">{errors.email}</p>}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Dental Concern *</label>
+              <select value={form.dentalConcern} onChange={e => setForm({...form, dentalConcern: e.target.value})} className="w-full p-3 rounded-xl border border-slate-300 bg-white font-semibold text-slate-800">
+                {concerns.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Preferred Date *</label>
+                <input type="date" value={form.preferredDate} onChange={e => setForm({...form, preferredDate: e.target.value})} className={`w-full p-3 rounded-xl border ${errors.preferredDate ? 'border-rose-400 bg-rose-50' : 'border-slate-300'}`} />
+                {errors.preferredDate && <p className="text-xs text-rose-500 mt-1">{errors.preferredDate}</p>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Preferred Time *</label>
+                <select value={form.preferredTime} onChange={e => setForm({...form, preferredTime: e.target.value})} className="w-full p-3 rounded-xl border border-slate-300 bg-white font-semibold text-slate-800">
+                  <option value="09:00 AM">09:00 AM</option>
+                  <option value="10:00 AM">10:00 AM</option>
+                  <option value="11:30 AM">11:30 AM</option>
+                  <option value="02:00 PM">02:00 PM</option>
+                  <option value="03:30 PM">03:30 PM</option>
+                  <option value="05:00 PM">05:00 PM</option>
+                  <option value="06:30 PM">06:30 PM</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Additional Message / Symptoms (Optional)</label>
+              <textarea rows="3" placeholder="Tell us more about what you are experiencing..." value={form.additionalMessage} onChange={e => setForm({...form, additionalMessage: e.target.value})} className="w-full p-3 rounded-xl border border-slate-300"></textarea>
+            </div>
+
+            <button type="submit" className="w-full py-4 bg-gradient-to-r from-teal-600 to-sky-700 text-white font-extrabold text-base rounded-2xl shadow-lg hover:shadow-xl transition">
+              Submit Appointment Request
+            </button>
+          </form>
+        </div>
+      );
+    }
+
+    // --- MY APPOINTMENTS VIEW ---
+    function MyAppointmentsView({ requests, onDelete, navigate }) {
+      return (
+        <div className="max-w-4xl mx-auto my-10 px-4 space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-black text-slate-900">My Appointment Requests</h1>
+              <p className="text-xs text-slate-500">Stored locally in your browser demo session.</p>
+            </div>
+            <button onClick={() => navigate('/book')} className="px-4 py-2 bg-teal-600 text-white text-xs font-bold rounded-xl shadow">
+              + New Request
+            </button>
+          </div>
+
+          {requests.length === 0 ? (
+            <div className="p-12 text-center bg-slate-50 rounded-3xl border border-slate-200 text-slate-500 text-sm">
+              No requests submitted yet. <button onClick={() => navigate('/book')} className="text-teal-600 font-bold underline ml-1">Book one now</button>.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {requests.map(r => (
+                <div key={r.id} className="p-5 bg-white rounded-2xl border border-slate-200 shadow-xs flex justify-between items-center gap-4">
+                  <div>
+                    <span className="text-[10px] font-mono font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded">{r.id}</span>
+                    <h3 className="font-bold text-slate-900 text-base mt-1">{r.dentalConcern}</h3>
+                    <p className="text-xs text-slate-500">Patient: <strong>{r.fullName}</strong> ({r.age} yrs) • {r.preferredDate} at {r.preferredTime}</p>
+                    <span className="text-[11px] text-amber-700 font-semibold mt-1 inline-block">● {r.status}</span>
+                  </div>
+                  <button onClick={() => onDelete(r.id)} className="text-xs font-bold text-rose-600 hover:bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-200">
+                    Cancel
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Render React Application to Root
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
